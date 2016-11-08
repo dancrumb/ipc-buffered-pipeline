@@ -1,2 +1,7 @@
-/.idea
-/lib
+.idea/
+lib/
+*.graffle
+node_modules/
+docs/
+ipcInit.js
+pipeline1.png
