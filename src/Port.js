@@ -11,7 +11,7 @@ import Promise from 'bluebird';
 class Port extends EventEmitter {
 
   /**
-   * A Port cannot be constructed until `ipc.config.id` has been set (the name of the owning
+   * A Port should not be constructed until `ipc.config.id` has been set (the name of the owning
    * process). Also, once a port has been created, the name of the owning process cannot be changed.
    *
    * @param name The name of the port
@@ -20,6 +20,11 @@ class Port extends EventEmitter {
     super();
     this.name = name;
     this.ipcId = ipc.config.id;
+
+    ipc.server.on(`connect:${this.name}`, (data) => {
+      // console.log('Connection Request: ', data);
+      this.emit('connectionRequest', data);
+    });
 
     this.portIsOpen = false;
     this.connections = {};
@@ -61,17 +66,17 @@ class Port extends EventEmitter {
    * @throws {Error} If this port is already connected to the indicated port and Error is thrown
    */
   connect(ipcId, port) {
+    // console.log(`Attempting to create connection to ${ipcId}.${port}`);
+
     if (this.connections[ipcId] && this.connections[ipcId][port]) {
       throw new Error(`Tried to connect to a Port (${ipcId}.${port}) that is already connected`);
     }
-
-    ipc.log(`Creating connection to ${ipcId}.${port}`);
 
     if (!this.connections[ipcId]) {
       this.connections[ipcId] = {};
     }
 
-    const connection = new Promise((resolve) => {
+    return new Promise((resolve) => {
       ipc.connectTo(ipcId, () => {
         this.connections[ipcId][port] = {
           ipcId,
@@ -80,11 +85,14 @@ class Port extends EventEmitter {
         };
 
         ipc.of[ipcId].emit(`connect:${port}`, { ipcId: this.ipcId, port: this.name });
+        // console.log('Connecting successful');
         resolve(this.connections[ipcId][port]);
       });
     });
+  }
 
-    return connection;
+  isConnectedTo(ipcId, port) {
+    return this.connections[ipcId] && port in this.connections[ipcId];
   }
 
 }

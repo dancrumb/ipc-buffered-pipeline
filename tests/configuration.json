@@ -1,0 +1,124 @@
+{
+  "steps": [
+    {
+      "id": "A:startProcess:A",
+      "process": "A",
+      "method": "startProcess",
+      "args": [
+        "A"
+      ]
+    },
+    {
+      "id": "B:startProcess:B",
+      "process": "B",
+      "method": "startProcess",
+      "args": [
+        "B"
+      ]
+    },
+    {
+      "id": "A:connectToProcess:B",
+      "process": "A",
+      "method": "connectToProcess",
+      "args": [
+        "B"
+      ]
+    },
+    {
+      "id": "B:connectToProcess:A",
+      "process": "B",
+      "method": "connectToProcess",
+      "args": [
+        "A"
+      ]
+    },
+    {
+      "id": "B:createOutgoingPort:OUT",
+      "process": "B",
+      "method": "createOutgoingPort",
+      "args": [
+        "OUT"
+      ]
+    },
+    {
+      "id": "A:createIncomingPort:IN",
+      "process": "A",
+      "method": "createIncomingPort",
+      "args": [
+        "IN"
+      ]
+    },
+    {
+      "id": "B:outConnectToIn:A,IN",
+      "process": "B",
+      "method": "outConnectToIn",
+      "args": [
+        "A",
+        "IN"
+      ],
+      "cannotCompleteBefore": "A:inConnectToOut:B,OUT"
+    },
+    {
+      "id": "A:inConnectToOut:B,OUT",
+      "process": "A",
+      "method": "inConnectToOut",
+      "args": [
+        "B",
+        "OUT"
+      ]
+    },
+    {
+      "id": "B:sendMessage",
+      "process": "B",
+      "method": "sendMessage"
+    },
+    {
+      "id": "A:receiveMessage",
+      "process": "A",
+      "method": "receiveMessage",
+      "cannotCompleteBefore": "B:sendMessage"
+    }
+  ],
+  "rules": [
+    [
+      "A:connectToProcess:B",
+      "A:startProcess:A"
+    ],
+    [
+      "B:connectToProcess:A",
+      "B:startProcess:B"
+    ],
+    [
+      "A:createIncomingPort:IN",
+      "A:startProcess:A"
+    ],
+    [
+      "B:createOutgoingPort:OUT",
+      "B:startProcess:B"
+    ],
+    [
+      "B:outConnectToIn:A,IN",
+      "B:createOutgoingPort:OUT"
+    ],
+    [
+      "B:sendMessage",
+      "B:outConnectToIn:A,IN"
+    ],
+    [
+      "A:inConnectToOut:B,OUT",
+      "A:createIncomingPort:IN"
+    ],
+    [
+      "A:inConnectToOut:B,OUT",
+      "B:outConnectToIn:A,IN"
+    ],
+    [
+      "A:receiveMessage",
+      "A:createIncomingPort:IN"
+    ],
+    [
+      "B:sendMessage",
+      "B:createOutgoingPort:OUT"
+    ]
+  ]
+}

@@ -28,7 +28,7 @@ Message.fromObject = function (o) {
   const message = new Message(o.contents);
   message.claim(o.owner);
   return message;
-}
+};
 
 export default Message;
 

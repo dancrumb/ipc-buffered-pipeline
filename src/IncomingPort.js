@@ -22,7 +22,7 @@ class IncomingPort extends Port {
       this.portsWithMessages.enqueue({ ipcId: data.ipcId, port: data.port });
     });
 
-    ipc.server.on(`connect:${this.name}`, (data) => {
+    this.on('connectionRequest', (data) => {
       this.connect(data.ipcId, data.port);
     });
   }
@@ -31,11 +31,11 @@ class IncomingPort extends Port {
    * @returns {Promise} a message
    */
   receive() {
-    const portsWithmessages = this.portsWithMessages;
+    const portsWithMessages = this.portsWithMessages;
 
     const messageRequester = {
       request: function request() {
-        const remote = portsWithmessages.dequeue();
+        const remote = portsWithMessages.dequeue();
         ipc.of[remote.ipcId].emit(`messageRequested:${remote.port}`);
 
         ipc.of[remote.ipcId].on('message', (messageObject) => {
@@ -53,8 +53,8 @@ class IncomingPort extends Port {
       messageRequester.reject = reject;
     });
 
-    if (portsWithmessages.isEmpty()) {
-      portsWithmessages.once('valueAdded', messageRequester.request.bind(messageRequester));
+    if (portsWithMessages.isEmpty()) {
+      portsWithMessages.once('valueAdded', messageRequester.request.bind(messageRequester));
     } else {
       messageRequester.request();
     }

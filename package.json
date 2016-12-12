@@ -17,21 +17,25 @@
   "dependencies": {
     "bluebird": "^3.4.6",
     "event-emitting-fifo": "^1.1.0",
-    "lodash": "^4.16.4"
+    "event-to-promise": "^0.7.0",
+    "lodash": "^4.16.4",
+    "babel-polyfill": "^6.20.0"
   },
   "peerDependencies": {
     "node-ipc": "8.x"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
+    "babel-eslint": "^7.1.1",
     "babel-preset-es2015": "^6.18.0",
+    "babel-preset-stage-0": "^6.16.0",
+    "docdash": "^0.4.0",
     "eslint": "^3.8.1",
     "eslint-config-airbnb": "^12.0.0",
     "eslint-config-es2015": "^1.1.0",
     "eslint-plugin-import": "^1.16.0",
     "eslint-plugin-jsx-a11y": "^2.2.3",
     "eslint-plugin-react": "^6.4.1",
-    "docdash": "^0.4.0",
     "jsdoc": "^3.4.2"
   }
 }

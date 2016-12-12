@@ -14,7 +14,7 @@ This module assumes that you're using [`node-ipc`](node-ipc). This dependency
 is defined in `package.json` as a peer-dependency.
 
 ## Pipeline concepts
-Let's start by assuming that you understand the difference between threads and processes.
+Let's initial by assuming that you understand the difference between threads and processes.
 
 We'll also assume that you understand Promises. If not, you should check out [this primer](promises).
 
@@ -50,7 +50,7 @@ First, the processes need to be connected to one another. This is done using the
 import ipc from 'node-ipc';
 ipc.config.id = 'process1';
 ipc.serve();
-ipc.server.start();
+ipc.server.initial();
 ipc.connectTo('process2');
  
 /*
@@ -59,7 +59,7 @@ ipc.connectTo('process2');
 import ipc from 'node-ipc';
 ipc.config.id = 'process2';
 ipc.serve();
-ipc.server.start();
+ipc.server.initial();
 ipc.connectTo('process1');
 
 ```

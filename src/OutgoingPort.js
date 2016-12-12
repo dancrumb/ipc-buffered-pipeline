@@ -1,41 +1,14 @@
-import FIFO from 'event-emitting-fifo';
-import ipc from 'node-ipc';
-import _ from 'lodash';
 import Promise from 'bluebird';
 import Port from './Port';
-import Message from './Message';
+import OutgoingStream from './OutgoingStream';
 
 function trySend(message, resolve) {
-  if (!this.remotePort) {
-    throw new Error('Not currently connected to a remote Port');
-  }
-
-  ipc.log(`Capacity: ${this.queue.length}/${this.capacity}`);
-
-  if (this.queue.length >= this.capacity) {
-    ipc.log('Full');
-    this.queue.once('messageRemoved', () => {
-      trySend.call(this, message, resolve);
-    });
-  } else {
-    ipc.log('Sending: ', message);
-    message.release();
-    this.queue.enqueue(message);
-    ipc.of[this.remotePort.ipcId].emit('messageAvailable', { port: this.name, ipcId: this.ipcId });
+  message.release();
+  if (this.stream.write(message)) {
     resolve();
+  } else {
+    this.stream.once('drain', trySend.bind(this, message, resolve));
   }
-}
-
-function getmessage() {
-  if (this.portIsOpen && !this.queue.isEmpty()) {
-    return this.queue.dequeue();
-  }
-
-  return null;
-}
-
-function dequeueAndSendToSocket(socket) {
-  ipc.server.emit(socket, 'message', getmessage.call(this));
 }
 
 /**
@@ -44,20 +17,8 @@ function dequeueAndSendToSocket(socket) {
 class OutgoingPort extends Port {
   constructor(portName, capacity = 20) {
     super(portName);
-    this.capacity = capacity;
-    this.queue = new FIFO();
 
-
-    ipc.server.on(`messageRequested:${this.name}`, (data, socket) => {
-      ipc.log(`Handling message request: ${data}`);
-      if (this.portIsOpen && this.queue.isEmpty()) {
-        this.queue.once('noLongerEmpty', () => {
-          dequeueAndSendToSocket.call(this, socket);
-        });
-      } else {
-        dequeueAndSendToSocket.call(this, socket);
-      }
-    });
+    this.stream = new OutgoingStream(null, portName, capacity);
   }
 
   /**
@@ -67,30 +28,28 @@ class OutgoingPort extends Port {
    * @returns {Promise} resolved once the `message` has been passed on
    */
   send(message) {
-    if (!this.isOpen()) {
-      throw new Error('Cannot send an IP via a closed port');
-    }
-    if (_.size(this.connections) === 0) {
-      throw new Error('Cannot send an IP without a connection to send it on');
-    }
-    if (message.owner !== this.ipcId) {
-      throw new Error('Trying to send message that is not owned by this process');
-    }
-
-    return new Promise(resolve => trySend.call(this, message, resolve));
+    return new Promise((resolve, reject) => {
+      if (!this.isOpen()) {
+        reject(new Error('Cannot send an IP via a closed port'));
+      } else if (!this.stream.isConnected) {
+        reject(new Error('Cannot send an IP without a connection to send it on'));
+      } else if (message.owner !== this.ipcId) {
+        reject(new Error('Trying to send message that is not owned by this process'));
+      } else {
+        trySend.call(this, message, resolve);
+      }
+    });
   }
 
   /**
    * @returns {Number} the number of messages waiting to be sent
    */
   getPendingMessageCount() {
-    return this.queue.length;
+    return this.stream.pendingMessageCount();
   }
 
-  connect(ipcId, port) {
-    return super.connect(ipcId, port).then((connection) => {
-      this.remotePort = connection;
-    });
+  connect(remoteProcess, remotePort) {
+    return this.stream.connect(remoteProcess, remotePort);
   }
 
   /**
